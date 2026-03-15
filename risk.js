@@ -1,157 +1,92 @@
-// ================================================================
-// risk.js — AI Risk Prediction Page Logic
-// ================================================================
+/**
+ * PediAI Platform — AI Risk Prediction JavaScript
+ */
 
-var aiDomainResults = { GM: null, FM: null, RL: null, EL: null, PS: null };
-var aiChart = null;
+function runAIRisk() {
+  const params = {
+    gm: document.getElementById('risk_gm')?.value === '0' ? 'ล่าช้า' : document.getElementById('risk_gm')?.value === '1' ? 'ติดตาม' : 'ปกติ',
+    fm: document.getElementById('risk_fm')?.value === '0' ? 'ล่าช้า' : document.getElementById('risk_fm')?.value === '1' ? 'ติดตาม' : 'ปกติ',
+    rl: document.getElementById('risk_rl')?.value === '0' ? 'ล่าช้า' : document.getElementById('risk_rl')?.value === '1' ? 'ติดตาม' : 'ปกติ',
+    el: document.getElementById('risk_el')?.value === '0' ? 'ล่าช้า' : document.getElementById('risk_el')?.value === '1' ? 'ติดตาม' : 'ปกติ',
+    ps: document.getElementById('risk_ps')?.value === '0' ? 'ล่าช้า' : document.getElementById('risk_ps')?.value === '1' ? 'ติดตาม' : 'ปกติ',
+    age: document.getElementById('risk_age')?.value || 24,
+    birthWeight: document.getElementById('risk_bw')?.value,
+    gestAge: document.getElementById('risk_ga')?.value,
+    prevHistory: document.getElementById('risk_prev')?.value || '0',
+    familyHistory: document.getElementById('risk_family')?.value || '0'
+  };
 
-function setAIDomain(domain, result) {
-  aiDomainResults[domain] = result;
-  var d = domain.toLowerCase();
-  ['pass','monitor','delay'].forEach(function(r) {
-    document.getElementById('ai-'+d+'-'+r).classList.remove('active');
-  });
-  var btnMap = { 'Pass':'pass', 'Monitor':'monitor', 'Delay':'delay' };
-  document.getElementById('ai-'+d+'-'+btnMap[result]).classList.add('active');
-
-  var item = document.getElementById('ai-'+d+'-item');
-  item.style.borderLeft = '4px solid ' + (result==='Pass'?'#16a34a':result==='Monitor'?'#0891b2':'#dc2626');
-
-  // Auto compute if all filled
-  var all = ['GM','FM','RL','EL','PS'].every(function(k){ return aiDomainResults[k] !== null; });
-  if (all) runAIPrediction();
-}
-
-function computeLive() {
-  var all = ['GM','FM','RL','EL','PS'].every(function(k){ return aiDomainResults[k] !== null; });
-  if (all) runAIPrediction();
-}
-
-function runAIPrediction() {
-  var age = Number(document.getElementById('aiAge').value) || 0;
-  var weights = { GM:0.20, FM:0.20, RL:0.25, EL:0.25, PS:0.10 };
-  var scores  = { Pass:0, Monitor:0.5, Delay:1.0 };
-
-  var raw = 0;
-  var factors = {};
-  ['GM','FM','RL','EL','PS'].forEach(function(d) {
-    var v = aiDomainResults[d];
-    if (!v) { v = 'Pass'; }
-    var s = scores[v] * weights[d];
-    raw += s;
-    factors[d] = { result: v, score: scores[v], weight: weights[d], contribution: +(s*100).toFixed(1) };
-  });
-
-  // Age modifier
-  var modifier = age <= 6 ? 1.2 : age <= 12 ? 1.1 : age <= 24 ? 1.0 : age <= 36 ? 0.95 : 0.9;
-  var finalScore = Math.min(100, Math.round(raw * modifier * 100));
-
-  var riskLevel, riskColor, riskClass, confidence;
-  if (finalScore >= 60) {
-    riskLevel = 'High Risk';     riskColor = '#dc2626'; riskClass = 'danger';  confidence = 78 + Math.floor(Math.random()*12);
-  } else if (finalScore >= 30) {
-    riskLevel = 'Moderate Risk'; riskColor = '#d97706'; riskClass = 'warning'; confidence = 72 + Math.floor(Math.random()*15);
-  } else {
-    riskLevel = 'Low Risk';      riskColor = '#16a34a'; riskClass = 'success'; confidence = 80 + Math.floor(Math.random()*15);
+  const result = computeAIRiskLocal(params);
+  if (result.status === 'success') {
+    renderAIRiskResult(result.data);
   }
-
-  renderAIResult(finalScore, riskLevel, riskColor, riskClass, confidence, factors);
 }
 
-function renderAIResult(score, level, color, cls, confidence, factors) {
-  var panel = document.getElementById('aiResultPanel');
-  panel.style.display = 'block';
+function renderAIRiskResult(data) {
+  const panel = document.getElementById('aiRiskResult');
+  if (!panel) return;
 
-  // Score
-  var bigEl = document.getElementById('aiScoreBig');
-  bigEl.textContent = score;
-  bigEl.style.color = color;
+  const colors = { low: 'var(--accent)', moderate: '#b89400', high: 'var(--danger)' };
+  const bgColors = { low: 'rgba(6,214,160,0.08)', moderate: 'rgba(255,214,10,0.08)', high: 'rgba(239,35,60,0.08)' };
+  const color = colors[data.risk_class] || '#333';
 
-  document.getElementById('aiRiskBadge').innerHTML =
-    '<span class="risk-badge risk-'+cls+'"><i class="bi bi-'+(cls==='danger'?'exclamation-circle-fill':cls==='warning'?'exclamation-triangle-fill':'check-circle-fill')+'"></i> '+level+'</span>';
-  document.getElementById('aiConfidence').textContent = confidence;
+  const dspmResult = analyzeDSPMLocal(data.params.gm, data.params.fm, data.params.rl, data.params.el, data.params.ps);
+  const dspm = dspmResult.data;
 
-  // Factor bars
-  var barColors = { Pass:'#16a34a', Monitor:'#0891b2', Delay:'#dc2626' };
-  var domainNames = { GM:'Gross Motor', FM:'Fine Motor', RL:'Receptive Lang', EL:'Expressive Lang', PS:'Personal Social' };
-  var barsHtml = Object.keys(factors).map(function(d) {
-    var f = factors[d];
-    var fillColor = barColors[f.result];
-    var fillPct = f.contribution / 25 * 100;
-    return '<div class="factor-bar">' +
-      '<div class="factor-label">' +
-        '<span><strong>'+d+'</strong> <small class="text-muted">'+domainNames[d]+'</small></span>' +
-        '<span class="badge" style="background:'+fillColor+';color:white">'+f.result+'</span>' +
-      '</div>' +
-      '<div class="factor-progress">' +
-        '<div class="factor-fill" style="width:'+Math.min(100,fillPct)+'%;background:'+fillColor+'"></div>' +
-      '</div>' +
-    '</div>';
-  }).join('');
-  document.getElementById('aiFactorBars').innerHTML = barsHtml;
+  panel.innerHTML = `
+    <!-- Risk Score Circle -->
+    <div class="risk-result-box ${data.risk_class} text-center">
+      <div class="risk-score-circle" style="border: 4px solid ${color}">
+        <div style="color:${color};font-size:28px;font-weight:900">${data.risk_score}</div>
+        <span style="color:${color}">/ 100</span>
+      </div>
+      <h5 style="color:${color};font-weight:800;margin-top:12px">${data.risk_icon} ${data.risk_level}</h5>
+      <p style="color:var(--text-muted);font-size:13px;margin:0">คะแนนความเสี่ยงจาก AI Model (0 = ต่ำ, 100 = สูง)</p>
+    </div>
 
-  // Recommendations
-  var recs = getRecommendations(level, factors);
-  document.getElementById('aiRecommendations').innerHTML = recs.map(function(r) {
-    return '<div class="d-flex gap-2 mb-2"><i class="bi bi-arrow-right-circle-fill text-primary mt-1" style="flex-shrink:0"></i><span style="font-size:13px">'+r+'</span></div>';
-  }).join('');
+    <!-- DSPM Outcome -->
+    <div class="dspm-outcome-card ${dspm.risk_class} mb-3">
+      <div style="font-size:28px">${dspm.risk_icon}</div>
+      <div>
+        <div class="dspm-label">ผล DSPM Clinical Decision</div>
+        <div class="dspm-desc fw-bold" style="font-size:14px;color:${colors[dspm.risk_class]}">${dspm.risk_level}</div>
+        <div class="dspm-desc">ล่าช้า ${dspm.delay_count} ด้าน · ติดตาม ${dspm.monitor_count} ด้าน</div>
+      </div>
+    </div>
 
-  renderScoreGaugeChart(score, color);
-  panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
+    <!-- Feature Contributions -->
+    <h6 style="font-weight:700;color:var(--primary);margin-bottom:12px"><i class="fas fa-chart-bar me-2"></i>ปัจจัยที่มีผลต่อคะแนน AI</h6>
+    <div style="margin-bottom:16px">
+      ${data.contributions.map(c => {
+        const pct = c.value;
+        const barColor = c.domain === 'ล่าช้า' ? 'var(--danger)' : c.domain === 'ติดตาม' ? 'var(--warning)' : 'var(--accent)';
+        return `
+        <div style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px">
+            <span style="font-weight:600">${c.label}</span>
+            <span style="color:${barColor};font-weight:700">${c.domain} (+${pct})</span>
+          </div>
+          <div style="height:8px;background:#f0f0f0;border-radius:4px;overflow:hidden">
+            <div style="height:100%;width:${Math.min(pct*5, 100)}%;background:${barColor};border-radius:4px;transition:width 0.6s ease"></div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
 
-function getRecommendations(level, factors) {
-  var recs = [];
-  if (level === 'High Risk') {
-    recs.push('ส่งปรึกษากุมารแพทย์ด้านพัฒนาการ (Developmental Pediatrician) ภายใน 1-2 สัปดาห์');
-    recs.push('พิจารณาส่งตรวจ Hearing test, Vision screening, และ Chromosomal analysis');
-    recs.push('ประเมิน Autism Spectrum Disorder (M-CHAT) หากอายุ 18-30 เดือน');
-    recs.push('แจ้งผู้ปกครองและให้คำแนะนำกิจกรรมกระตุ้นพัฒนาการที่บ้านทันที');
-  } else if (level === 'Moderate Risk') {
-    recs.push('นัดติดตามผลในอีก 4-6 สัปดาห์');
-    recs.push('แนะนำกิจกรรมส่งเสริมพัฒนาการตาม domain ที่บกพร่อง');
-    recs.push('ให้ความรู้ผู้ปกครองเรื่องการกระตุ้นพัฒนาการที่บ้าน');
-  } else {
-    recs.push('ดูแลต่อเนื่องตามกำหนดนัดปกติ');
-    recs.push('ส่งเสริมโภชนาการ การนอนหลับ และการเล่นที่เหมาะสมกับวัย');
-    recs.push('ลด Screen Time ตามคำแนะนำ AAP (< 1 ชม./วัน สำหรับเด็ก 2-5 ปี)');
-  }
-  var delayDomains = Object.keys(factors).filter(function(d){ return factors[d].result === 'Delay'; });
-  if (delayDomains.length) recs.push('โดเมนที่ต้องให้ความสนใจ: ' + delayDomains.join(', '));
-  return recs;
-}
+    <!-- Recommendations -->
+    <div style="background:#f8fafc;border-radius:10px;padding:14px;border-left:4px solid ${color}">
+      <h6 style="font-weight:700;color:var(--primary);margin-bottom:10px"><i class="fas fa-clipboard-list me-2"></i>คำแนะนำทางคลินิก</h6>
+      <ul style="margin:0;padding-left:18px">
+        ${dspm.recommendations.map(r => `<li style="margin-bottom:5px;font-size:14px">${r}</li>`).join('')}
+      </ul>
+    </div>
 
-function renderScoreGaugeChart(score, color) {
-  if (aiChart) aiChart.destroy();
-  var ctx = document.getElementById('aiScoreChart').getContext('2d');
-  aiChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: ['Low Risk\n(0-29)', 'Moderate Risk\n(30-59)', 'High Risk\n(60-100)'],
-      datasets: [{
-        label: 'ขอบเขตความเสี่ยง',
-        data: [29, 30, 41],
-        backgroundColor: ['rgba(22,163,74,0.3)', 'rgba(217,119,6,0.3)', 'rgba(220,38,38,0.3)'],
-        borderColor: ['#16a34a', '#d97706', '#dc2626'],
-        borderWidth: 1.5, borderRadius: 6
-      }, {
-        label: 'AI Score ปัจจุบัน',
-        data: [score <= 29 ? score : 0, score >= 30 && score <= 59 ? score : 0, score >= 60 ? score : 0],
-        backgroundColor: color + '99',
-        borderColor: color,
-        borderWidth: 2, borderRadius: 6
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { position: 'top', labels: { font: { family: 'Sarabun', size: 13 } } },
-        title: { display: true, text: 'AI Risk Score — ' + score + '/100', font: { family: 'Sarabun', size: 14 } }
-      },
-      scales: {
-        x: { grid: { display: false }, ticks: { font: { family: 'Sarabun', size: 12 } } },
-        y: { beginAtZero: true, max: 100, ticks: { font: { family: 'Sarabun', size: 12 } }, grid: { color: '#f1f5f9' } }
-      }
-    }
-  });
+    <!-- Actions -->
+    <div class="d-flex gap-2 mt-3 flex-wrap">
+      <a href="assessment.html" class="btn btn-sm btn-primary"><i class="fas fa-clipboard-check me-1"></i>ไปประเมินเต็มรูปแบบ</a>
+      <a href="chatbot.html" class="btn btn-sm btn-outline-primary"><i class="fas fa-robot me-1"></i>ถามผู้ช่วย AI</a>
+    </div>
+  `;
+
+  showToast(`✅ AI วิเคราะห์แล้ว: ${data.risk_level}`, 'success');
 }
