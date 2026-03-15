@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Chatbot — PedAI Platform</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon"><i class="bi bi-heart-pulse-fill"></i></div>
+    <div class="brand-text"><span class="brand-title">PedAI</span><span class="brand-sub">Healthcare Platform</span></div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">หน้าหลัก</div>
+    <a href="index.html" class="nav-item"><i class="bi bi-grid-fill"></i><span>Dashboard</span></a>
+    <div class="nav-section-label">ข้อมูลผู้ป่วย</div>
+    <a href="register.html" class="nav-item"><i class="bi bi-person-plus-fill"></i><span>ลงทะเบียนเด็ก</span></a>
+    <a href="assessment.html" class="nav-item"><i class="bi bi-clipboard2-pulse-fill"></i><span>ประเมิน DSPM</span></a>
+    <a href="ai-risk.html" class="nav-item"><i class="bi bi-cpu-fill"></i><span>AI Risk Prediction</span></a>
+    <div class="nav-section-label">Analytics</div>
+    <a href="hospital-dashboard.html" class="nav-item"><i class="bi bi-building-fill-cross"></i><span>Hospital Dashboard</span></a>
+    <a href="provincial-dashboard.html" class="nav-item"><i class="bi bi-map-fill"></i><span>Provincial Dashboard</span></a>
+    <div class="nav-section-label">เครื่องมือ</div>
+    <a href="chatbot.html" class="nav-item active"><i class="bi bi-chat-dots-fill"></i><span>AI Chatbot</span></a>
+    <a href="research.html" class="nav-item"><i class="bi bi-database-fill-down"></i><span>Research Export</span></a>
+  </nav>
+</div>
+
+<div class="main-content" id="mainContent">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="btn-menu" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+      <div class="page-breadcrumb">
+        <span class="breadcrumb-parent">เครื่องมือ</span>
+        <i class="bi bi-chevron-right"></i>
+        <span class="breadcrumb-current">AI Chatbot Assistant</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title"><i class="bi bi-chat-dots-fill text-primary me-2"></i>AI Pediatric Chatbot</h1>
+      <p class="page-subtitle">ผู้ช่วย AI สำหรับคำแนะนำพัฒนาการเด็กและการศึกษาพยาบาล</p>
+    </div>
+  </div>
+
+  <div class="chatbot-layout">
+    <!-- Sidebar panel -->
+    <div class="chatbot-sidebar">
+      <div class="chatbot-info-card">
+        <div class="bot-avatar-lg"><i class="bi bi-robot"></i></div>
+        <h4>PedAI Assistant</h4>
+        <p>ผู้เชี่ยวชาญด้านพัฒนาการเด็กปฐมวัย</p>
+        <div class="bot-badge"><span class="status-dot online"></span> ออนไลน์</div>
+      </div>
+
+      <div class="quick-topics">
+        <h5>หัวข้อด่วน</h5>
+        <button class="topic-btn" onclick="sendQuickMessage('กล้ามเนื้อมัดใหญ่ GM คืออะไร')">
+          <i class="bi bi-person-arms-up"></i> GM Domain
+        </button>
+        <button class="topic-btn" onclick="sendQuickMessage('กล้ามเนื้อมัดเล็ก FM milestone')">
+          <i class="bi bi-hand-index-thumb"></i> FM Domain
+        </button>
+        <button class="topic-btn" onclick="sendQuickMessage('พัฒนาการภาษาในเด็ก')">
+          <i class="bi bi-chat-fill"></i> ภาษา RL/EL
+        </button>
+        <button class="topic-btn" onclick="sendQuickMessage('พัฒนาการสังคมอารมณ์ PS')">
+          <i class="bi bi-people-fill"></i> PS Domain
+        </button>
+        <button class="topic-btn" onclick="sendQuickMessage('ออทิสติก ASD คัดกรองอย่างไร')">
+          <i class="bi bi-search-heart"></i> Autism / ASD
+        </button>
+        <button class="topic-btn" onclick="sendQuickMessage('เกณฑ์การส่งต่อผู้เชี่ยวชาญ')">
+          <i class="bi bi-arrow-right-circle-fill"></i> ส่งต่อ
+        </button>
+        <button class="topic-btn" onclick="sendQuickMessage('กิจกรรมกระตุ้นพัฒนาการ')">
+          <i class="bi bi-stars"></i> กิจกรรมกระตุ้น
+        </button>
+        <button class="topic-btn" onclick="sendQuickMessage('DSPM คู่มือคืออะไร')">
+          <i class="bi bi-book-fill"></i> DSPM คืออะไร
+        </button>
+      </div>
+
+      <div class="context-panel">
+        <h5>Context เด็ก (ตัวเลือก)</h5>
+        <label class="form-label form-label-sm">Child ID</label>
+        <input type="text" class="form-control form-control-sm" id="chatChildId" placeholder="C_xxx (ไม่บังคับ)">
+      </div>
+    </div>
+
+    <!-- Chat area -->
+    <div class="chatbot-main">
+      <div class="chat-messages" id="chatMessages">
+        <!-- Welcome message -->
+        <div class="chat-msg bot-msg">
+          <div class="msg-avatar"><i class="bi bi-robot"></i></div>
+          <div class="msg-bubble">
+            <div class="msg-text">
+              สวัสดีครับ! 👋 ผมคือ <strong>PedAI Assistant</strong> ผู้ช่วย AI ด้านพัฒนาการเด็กปฐมวัย<br><br>
+              ผมสามารถช่วยคุณเรื่อง:<br>
+              • ข้อมูลพัฒนาการ 5 ด้าน (GM, FM, RL, EL, PS)<br>
+              • Milestone เด็กแต่ละวัย<br>
+              • กิจกรรมกระตุ้นพัฒนาการ<br>
+              • เกณฑ์การส่งต่อผู้เชี่ยวชาญ<br>
+              • การคัดกรอง Autism (M-CHAT)<br><br>
+              พิมพ์ <strong>"ช่วย"</strong> เพื่อดูรายการทั้งหมด หรือเลือกหัวข้อด่วนทางซ้ายได้เลยครับ
+            </div>
+            <div class="msg-time">เพิ่งเริ่ม</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="chat-input-area">
+        <div class="chat-input-box">
+          <input type="text" class="chat-input" id="chatInput"
+            placeholder="พิมพ์คำถามเกี่ยวกับพัฒนาการเด็ก..."
+            onkeypress="if(event.key==='Enter') sendMessage()">
+          <button class="chat-send-btn" onclick="sendMessage()">
+            <i class="bi bi-send-fill"></i>
+          </button>
+        </div>
+        <div class="chat-disclaimer">PedAI ให้ข้อมูลเพื่อการศึกษา ไม่ใช่การวินิจฉัยทางการแพทย์</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/api.js"></script>
+<script src="js/chatbot.js"></script>
+</body>
+</html>

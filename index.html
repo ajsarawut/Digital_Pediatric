@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Digital Pediatric AI Healthcare Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon"><i class="bi bi-heart-pulse-fill"></i></div>
+    <div class="brand-text">
+      <span class="brand-title">PedAI</span>
+      <span class="brand-sub">Healthcare Platform</span>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">หน้าหลัก</div>
+    <a href="index.html" class="nav-item active"><i class="bi bi-grid-fill"></i><span>Dashboard</span></a>
+    <div class="nav-section-label">ข้อมูลผู้ป่วย</div>
+    <a href="register.html" class="nav-item"><i class="bi bi-person-plus-fill"></i><span>ลงทะเบียนเด็ก</span></a>
+    <a href="assessment.html" class="nav-item"><i class="bi bi-clipboard2-pulse-fill"></i><span>ประเมิน DSPM</span></a>
+    <a href="ai-risk.html" class="nav-item"><i class="bi bi-cpu-fill"></i><span>AI Risk Prediction</span></a>
+    <div class="nav-section-label">Analytics</div>
+    <a href="hospital-dashboard.html" class="nav-item"><i class="bi bi-building-fill-cross"></i><span>Hospital Dashboard</span></a>
+    <a href="provincial-dashboard.html" class="nav-item"><i class="bi bi-map-fill"></i><span>Provincial Dashboard</span></a>
+    <div class="nav-section-label">เครื่องมือ</div>
+    <a href="chatbot.html" class="nav-item"><i class="bi bi-chat-dots-fill"></i><span>AI Chatbot</span></a>
+    <a href="research.html" class="nav-item"><i class="bi bi-database-fill-down"></i><span>Research Export</span></a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="system-status"><span class="status-dot online"></span><span>ระบบออนไลน์</span></div>
+    <div class="version-tag">v1.0.0 Thailand</div>
+  </div>
+</div>
+
+<!-- Main Content -->
+<div class="main-content" id="mainContent">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="btn-menu" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+      <div class="page-breadcrumb">
+        <span class="breadcrumb-parent">ภาพรวมระบบ</span>
+        <i class="bi bi-chevron-right"></i>
+        <span class="breadcrumb-current">National Dashboard</span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="date-badge"><i class="bi bi-calendar3"></i> <span id="currentDate"></span></div>
+      <button class="btn-refresh" onclick="loadDashboard()"><i class="bi bi-arrow-clockwise"></i> รีเฟรช</button>
+    </div>
+  </div>
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title"><i class="bi bi-heart-pulse-fill text-primary me-2"></i>Digital Pediatric AI Healthcare Platform</h1>
+      <p class="page-subtitle">ระบบติดตามพัฒนาการเด็กปฐมวัยด้วย AI — ประเทศไทย</p>
+    </div>
+    <div class="header-actions">
+      <a href="register.html" class="btn btn-primary-custom"><i class="bi bi-plus-lg me-1"></i>ลงทะเบียนเด็กใหม่</a>
+      <a href="assessment.html" class="btn btn-outline-primary ms-2"><i class="bi bi-clipboard2-pulse me-1"></i>ประเมิน DSPM</a>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid" id="kpiGrid">
+    <div class="kpi-card kpi-total">
+      <div class="kpi-icon"><i class="bi bi-people-fill"></i></div>
+      <div class="kpi-content">
+        <div class="kpi-value" id="kpiTotal">—</div>
+        <div class="kpi-label">เด็กทั้งหมดในระบบ</div>
+        <div class="kpi-sub" id="kpiAssess">— การประเมิน</div>
+      </div>
+    </div>
+    <div class="kpi-card kpi-normal">
+      <div class="kpi-icon"><i class="bi bi-check-circle-fill"></i></div>
+      <div class="kpi-content">
+        <div class="kpi-value" id="kpiNormal">—</div>
+        <div class="kpi-label">พัฒนาการปกติ</div>
+        <div class="kpi-pct" id="kpiNormalPct">—%</div>
+      </div>
+    </div>
+    <div class="kpi-card kpi-monitor">
+      <div class="kpi-icon"><i class="bi bi-eye-fill"></i></div>
+      <div class="kpi-content">
+        <div class="kpi-value" id="kpiMonitor">—</div>
+        <div class="kpi-label">เฝ้าระวังพัฒนาการ</div>
+        <div class="kpi-pct" id="kpiMonitorPct">—%</div>
+      </div>
+    </div>
+    <div class="kpi-card kpi-moderate">
+      <div class="kpi-icon"><i class="bi bi-exclamation-triangle-fill"></i></div>
+      <div class="kpi-content">
+        <div class="kpi-value" id="kpiModerate">—</div>
+        <div class="kpi-label">ความเสี่ยงปานกลาง</div>
+        <div class="kpi-pct" id="kpiModeratePct">—%</div>
+      </div>
+    </div>
+    <div class="kpi-card kpi-high">
+      <div class="kpi-icon"><i class="bi bi-exclamation-circle-fill"></i></div>
+      <div class="kpi-content">
+        <div class="kpi-value" id="kpiHigh">—</div>
+        <div class="kpi-label">พัฒนาการล่าช้าสูง</div>
+        <div class="kpi-pct" id="kpiHighPct">—%</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Row 1 -->
+  <div class="charts-row">
+    <div class="chart-card chart-lg">
+      <div class="chart-header">
+        <div>
+          <h3 class="chart-title"><i class="bi bi-bar-chart-fill me-2 text-primary"></i>ความล่าช้าตาม Domain พัฒนาการ</h3>
+          <p class="chart-sub">จำนวนเด็กที่มีผล Delay แยกตาม 5 ด้าน</p>
+        </div>
+      </div>
+      <div class="chart-body"><canvas id="domainChart"></canvas></div>
+    </div>
+    <div class="chart-card chart-sm">
+      <div class="chart-header">
+        <h3 class="chart-title"><i class="bi bi-pie-chart-fill me-2 text-primary"></i>สัดส่วนความเสี่ยง</h3>
+      </div>
+      <div class="chart-body"><canvas id="riskPieChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Charts Row 2 -->
+  <div class="charts-row">
+    <div class="chart-card chart-md">
+      <div class="chart-header">
+        <h3 class="chart-title"><i class="bi bi-graph-up me-2 text-primary"></i>แนวโน้มรายเดือน</h3>
+        <p class="chart-sub">จำนวนการประเมินและกรณีเสี่ยงสูง 6 เดือนล่าสุด</p>
+      </div>
+      <div class="chart-body"><canvas id="trendChart"></canvas></div>
+    </div>
+    <div class="chart-card chart-md">
+      <div class="chart-header">
+        <h3 class="chart-title"><i class="bi bi-people me-2 text-primary"></i>ความล่าช้าตามกลุ่มอายุ</h3>
+        <p class="chart-sub">อัตราพัฒนาการล่าช้าแยกตามช่วงอายุ</p>
+      </div>
+      <div class="chart-body"><canvas id="ageChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Charts Row 3 -->
+  <div class="charts-row">
+    <div class="chart-card chart-lg">
+      <div class="chart-header">
+        <h3 class="chart-title"><i class="bi bi-building me-2 text-primary"></i>เปรียบเทียบโรงพยาบาล</h3>
+        <p class="chart-sub">อัตราพัฒนาการล่าช้าแยกตามโรงพยาบาล</p>
+      </div>
+      <div class="chart-body"><canvas id="hospitalChart"></canvas></div>
+    </div>
+    <div class="chart-card chart-sm">
+      <div class="chart-header">
+        <h3 class="chart-title"><i class="bi bi-geo-alt-fill me-2 text-primary"></i>แยกตามจังหวัด</h3>
+      </div>
+      <div class="chart-body"><canvas id="provinceChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Recent Table -->
+  <div class="chart-card mb-4">
+    <div class="chart-header">
+      <div>
+        <h3 class="chart-title"><i class="bi bi-exclamation-circle-fill me-2 text-danger"></i>กรณีที่ต้องติดตาม</h3>
+        <p class="chart-sub">เด็กที่มีความเสี่ยงสูงล่าสุด</p>
+      </div>
+      <a href="assessment.html" class="btn btn-sm btn-outline-primary">ดูทั้งหมด</a>
+    </div>
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ชื่อ-สกุล</th><th>HN</th><th>อายุ (เดือน)</th>
+            <th>GM</th><th>FM</th><th>RL</th><th>EL</th><th>PS</th>
+            <th>ระดับความเสี่ยง</th><th>วันที่ประเมิน</th>
+          </tr>
+        </thead>
+        <tbody id="recentTableBody">
+          <tr><td colspan="10" class="text-center py-4 text-muted">กำลังโหลดข้อมูล...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="fab-container">
+  <a href="chatbot.html" class="fab-btn" title="AI Chatbot"><i class="bi bi-chat-dots-fill"></i></a>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="js/api.js"></script>
+<script src="js/dashboard.js"></script>
+<script>
+  document.getElementById('currentDate').textContent = new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
+  loadDashboard();
+</script>
+</body>
+</html>

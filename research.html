@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Research Export — PedAI Platform</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon"><i class="bi bi-heart-pulse-fill"></i></div>
+    <div class="brand-text"><span class="brand-title">PedAI</span><span class="brand-sub">Healthcare Platform</span></div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">หน้าหลัก</div>
+    <a href="index.html" class="nav-item"><i class="bi bi-grid-fill"></i><span>Dashboard</span></a>
+    <div class="nav-section-label">ข้อมูลผู้ป่วย</div>
+    <a href="register.html" class="nav-item"><i class="bi bi-person-plus-fill"></i><span>ลงทะเบียนเด็ก</span></a>
+    <a href="assessment.html" class="nav-item"><i class="bi bi-clipboard2-pulse-fill"></i><span>ประเมิน DSPM</span></a>
+    <a href="ai-risk.html" class="nav-item"><i class="bi bi-cpu-fill"></i><span>AI Risk Prediction</span></a>
+    <div class="nav-section-label">Analytics</div>
+    <a href="hospital-dashboard.html" class="nav-item"><i class="bi bi-building-fill-cross"></i><span>Hospital Dashboard</span></a>
+    <a href="provincial-dashboard.html" class="nav-item"><i class="bi bi-map-fill"></i><span>Provincial Dashboard</span></a>
+    <div class="nav-section-label">เครื่องมือ</div>
+    <a href="chatbot.html" class="nav-item"><i class="bi bi-chat-dots-fill"></i><span>AI Chatbot</span></a>
+    <a href="research.html" class="nav-item active"><i class="bi bi-database-fill-down"></i><span>Research Export</span></a>
+  </nav>
+</div>
+
+<div class="main-content" id="mainContent">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="btn-menu" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+      <div class="page-breadcrumb">
+        <span class="breadcrumb-parent">เครื่องมือ</span>
+        <i class="bi bi-chevron-right"></i>
+        <span class="breadcrumb-current">Research Data Export</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title"><i class="bi bi-database-fill-down text-primary me-2"></i>Research Data Export</h1>
+      <p class="page-subtitle">ส่งออกข้อมูลสำหรับการวิจัยระบาดวิทยาพัฒนาการเด็ก (De-identified)</p>
+    </div>
+  </div>
+
+  <!-- Export Options -->
+  <div class="form-card">
+    <div class="form-card-header"><i class="bi bi-funnel me-2"></i>ตัวกรองข้อมูล</div>
+    <div class="form-card-body">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label">รูปแบบไฟล์</label>
+          <select class="form-control" id="exportFormat">
+            <option value="csv">CSV (Excel-compatible)</option>
+            <option value="json">JSON (API-compatible)</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">จังหวัด</label>
+          <select class="form-control" id="exportProv">
+            <option value="all">ทุกจังหวัด</option>
+            <option value="P001">กรุงเทพมหานคร</option>
+            <option value="P002">เชียงใหม่</option>
+            <option value="P003">ขอนแก่น</option>
+            <option value="P004">สงขลา</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">ช่วงวันที่ (เริ่มต้น)</label>
+          <input type="date" class="form-control" id="exportDateFrom">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">ช่วงวันที่ (สิ้นสุด)</label>
+          <input type="date" class="form-control" id="exportDateTo">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">ระดับความเสี่ยง</label>
+          <select class="form-control" id="exportRisk">
+            <option value="all">ทุกระดับ</option>
+            <option value="normal">Normal Development</option>
+            <option value="monitoring">Development Monitoring</option>
+            <option value="moderate">Moderate Risk</option>
+            <option value="high">High Risk</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">ช่วงอายุ (เดือน)</label>
+          <select class="form-control" id="exportAge">
+            <option value="all">ทุกช่วงอายุ</option>
+            <option value="0-12">0-12 เดือน</option>
+            <option value="13-36">13-36 เดือน</option>
+            <option value="37-72">37-72 เดือน</option>
+          </select>
+        </div>
+        <div class="col-12 d-flex gap-3 mt-2">
+          <button class="btn btn-primary-custom btn-lg" onclick="generateExport()">
+            <i class="bi bi-download me-2"></i>Export ข้อมูล
+          </button>
+          <button class="btn btn-outline-secondary btn-lg" onclick="previewData()">
+            <i class="bi bi-eye me-1"></i>ดูตัวอย่าง
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Privacy Notice -->
+  <div class="mx-4 mt-4">
+    <div class="alert-clinical alert-normal">
+      <i class="bi bi-shield-fill-check text-success fs-5"></i>
+      <div>
+        <strong>การคุ้มครองข้อมูลส่วนบุคคล (PDPA)</strong><br>
+        ข้อมูลที่ export ผ่านการ <strong>De-identification</strong> แล้ว — ไม่มีชื่อ, เลข HN, ที่อยู่ หรือข้อมูลที่สามารถระบุตัวตนได้
+        ใช้ได้เฉพาะเพื่อการวิจัยทางวิทยาศาสตร์และการแพทย์เท่านั้น
+      </div>
+    </div>
+  </div>
+
+  <!-- Preview Panel -->
+  <div id="previewPanel" class="form-card" style="display:none">
+    <div class="form-card-header d-flex justify-content-between align-items-center">
+      <span><i class="bi bi-table me-2"></i>ตัวอย่างข้อมูล (10 แถวแรก)</span>
+      <span class="badge bg-primary" id="totalCount">0 records</span>
+    </div>
+    <div class="form-card-body p-0">
+      <div class="table-responsive">
+        <table class="data-table" id="previewTable">
+          <thead>
+            <tr>
+              <th>record_id</th><th>age_months</th><th>GM_result</th>
+              <th>FM_result</th><th>RL_result</th><th>EL_result</th><th>PS_result</th>
+              <th>risk_level</th><th>risk_score</th><th>assessment_date</th>
+            </tr>
+          </thead>
+          <tbody id="previewBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dataset Summary Stats -->
+  <div class="form-card" style="margin:24px 28px 28px">
+    <div class="form-card-header"><i class="bi bi-bar-chart-steps me-2"></i>สถิติสรุปชุดข้อมูล</div>
+    <div class="form-card-body">
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div style="height:240px"><canvas id="resDistChart"></canvas></div>
+        </div>
+        <div class="col-md-6">
+          <div id="summaryStats">
+            <div class="row g-3">
+              <div class="col-6"><div class="stat-box"><div class="stat-num">4,312</div><div class="stat-lbl">การประเมินทั้งหมด</div></div></div>
+              <div class="col-6"><div class="stat-box"><div class="stat-num">1,847</div><div class="stat-lbl">เด็กที่ลงทะเบียน</div></div></div>
+              <div class="col-6"><div class="stat-box"><div class="stat-num">5</div><div class="stat-lbl">โรงพยาบาล</div></div></div>
+              <div class="col-6"><div class="stat-box"><div class="stat-num">8</div><div class="stat-lbl">จังหวัด</div></div></div>
+              <div class="col-6"><div class="stat-box stat-danger"><div class="stat-num">17.9%</div><div class="stat-lbl">อัตราพัฒนาการล่าช้า</div></div></div>
+              <div class="col-6"><div class="stat-box stat-info"><div class="stat-num">2024-2025</div><div class="stat-lbl">ปีที่เก็บข้อมูล</div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.stat-box { background:var(--bg,#f0f4f8); border-radius:10px; padding:16px; text-align:center; }
+.stat-num { font-size:24px; font-weight:700; color:var(--text-main,#1e293b); }
+.stat-lbl { font-size:12px; color:var(--text-muted,#64748b); margin-top:4px; }
+.stat-danger .stat-num { color:#dc2626; }
+.stat-info  .stat-num  { color:#0891b2; }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="js/api.js"></script>
+<script>
+var mockRecords = Array.from({length:30}, function(_,i) {
+  var results = ['Pass','Pass','Monitor','Delay'];
+  return {
+    record_id:'REC_'+(i+1),
+    age_months: 3 + Math.floor(Math.random()*57),
+    GM_result: results[Math.floor(Math.random()*4)],
+    FM_result: results[Math.floor(Math.random()*4)],
+    RL_result: results[Math.floor(Math.random()*4)],
+    EL_result: results[Math.floor(Math.random()*4)],
+    PS_result: results[Math.floor(Math.random()*4)],
+    risk_level: ['Normal Development','Development Monitoring','Moderate Risk','High Risk Developmental Delay'][Math.floor(Math.random()*4)],
+    risk_score: Math.floor(Math.random()*100),
+    assessment_date:'2025-0'+(1+Math.floor(Math.random()*9))+'-'+(10+Math.floor(Math.random()*18))
+  };
+});
+
+function previewData() {
+  var panel = document.getElementById('previewPanel');
+  panel.style.display = 'block';
+  document.getElementById('totalCount').textContent = mockRecords.length + ' records';
+  var tbody = document.getElementById('previewBody');
+  tbody.innerHTML = mockRecords.slice(0,10).map(function(r) {
+    return '<tr><td><code>'+r.record_id+'</code></td><td>'+r.age_months+'</td>'+
+      '<td>'+getResultBadge(r.GM_result)+'</td>'+
+      '<td>'+getResultBadge(r.FM_result)+'</td>'+
+      '<td>'+getResultBadge(r.RL_result)+'</td>'+
+      '<td>'+getResultBadge(r.EL_result)+'</td>'+
+      '<td>'+getResultBadge(r.PS_result)+'</td>'+
+      '<td>'+getRiskBadgeHTML(r.risk_level)+'</td>'+
+      '<td>'+r.risk_score+'</td>'+
+      '<td>'+r.assessment_date+'</td></tr>';
+  }).join('');
+  panel.scrollIntoView({behavior:'smooth'});
+}
+
+function generateExport() {
+  var fmt = document.getElementById('exportFormat').value;
+  if(fmt === 'csv') {
+    var headers = 'record_id,age_months,GM_result,FM_result,RL_result,EL_result,PS_result,risk_level,risk_score,assessment_date';
+    var rows = mockRecords.map(function(r) {
+      return [r.record_id,r.age_months,r.GM_result,r.FM_result,r.RL_result,r.EL_result,r.PS_result,r.risk_level,r.risk_score,r.assessment_date].join(',');
+    });
+    var content = headers + '\n' + rows.join('\n');
+    downloadFile('pediatric_research_data.csv', content, 'text/csv');
+  } else {
+    var json = JSON.stringify({ metadata:{exported_at:new Date().toISOString(),total_records:mockRecords.length,note:'De-identified data'}, records:mockRecords }, null, 2);
+    downloadFile('pediatric_research_data.json', json, 'application/json');
+  }
+  showToast('Export สำเร็จ! ' + mockRecords.length + ' records', 'success');
+}
+
+function downloadFile(filename, content, type) {
+  var blob = new Blob([content], {type:type});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Stats chart
+document.addEventListener('DOMContentLoaded', function() {
+  var ctx = document.getElementById('resDistChart').getContext('2d');
+  new Chart(ctx, { type:'doughnut', data:{ labels:['Normal Development','Development Monitoring','Moderate Risk','High Risk'],
+    datasets:[{ data:[2893,648,518,253], backgroundColor:['#16a34a','#0891b2','#d97706','#dc2626'], borderWidth:2, borderColor:'#fff' }]},
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'60%',
+    plugins:{ legend:{ position:'bottom', labels:{ font:{ family:'Sarabun',size:12 },padding:12 }},
+    title:{ display:true, text:'การกระจายตัวของชุดข้อมูล', font:{ family:'Sarabun',size:14 }}}}});
+});
+</script>
+</body>
+</html>

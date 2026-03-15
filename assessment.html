@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ประเมิน DSPM — PedAI Platform</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<!-- Sidebar (same as index) -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon"><i class="bi bi-heart-pulse-fill"></i></div>
+    <div class="brand-text"><span class="brand-title">PedAI</span><span class="brand-sub">Healthcare Platform</span></div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">หน้าหลัก</div>
+    <a href="index.html" class="nav-item"><i class="bi bi-grid-fill"></i><span>Dashboard</span></a>
+    <div class="nav-section-label">ข้อมูลผู้ป่วย</div>
+    <a href="register.html" class="nav-item"><i class="bi bi-person-plus-fill"></i><span>ลงทะเบียนเด็ก</span></a>
+    <a href="assessment.html" class="nav-item active"><i class="bi bi-clipboard2-pulse-fill"></i><span>ประเมิน DSPM</span></a>
+    <a href="ai-risk.html" class="nav-item"><i class="bi bi-cpu-fill"></i><span>AI Risk Prediction</span></a>
+    <div class="nav-section-label">Analytics</div>
+    <a href="hospital-dashboard.html" class="nav-item"><i class="bi bi-building-fill-cross"></i><span>Hospital Dashboard</span></a>
+    <a href="provincial-dashboard.html" class="nav-item"><i class="bi bi-map-fill"></i><span>Provincial Dashboard</span></a>
+    <div class="nav-section-label">เครื่องมือ</div>
+    <a href="chatbot.html" class="nav-item"><i class="bi bi-chat-dots-fill"></i><span>AI Chatbot</span></a>
+    <a href="research.html" class="nav-item"><i class="bi bi-database-fill-down"></i><span>Research Export</span></a>
+  </nav>
+</div>
+
+<div class="main-content" id="mainContent">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="btn-menu" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+      <div class="page-breadcrumb">
+        <span class="breadcrumb-parent">ข้อมูลผู้ป่วย</span>
+        <i class="bi bi-chevron-right"></i>
+        <span class="breadcrumb-current">ประเมิน DSPM</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title"><i class="bi bi-clipboard2-pulse-fill text-primary me-2"></i>ประเมินพัฒนาการ DSPM</h1>
+      <p class="page-subtitle">คู่มือเฝ้าระวังและส่งเสริมพัฒนาการเด็กปฐมวัย — 5 ด้านหลัก</p>
+    </div>
+  </div>
+
+  <!-- Search Child -->
+  <div class="form-card mb-4">
+    <div class="form-card-header"><i class="bi bi-search me-2"></i>ค้นหาเด็ก</div>
+    <div class="form-card-body">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">รหัสเด็ก (Child ID)</label>
+          <input type="text" class="form-control" id="searchChildId" placeholder="C_xxx">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">HN</label>
+          <input type="text" class="form-control" id="searchHN" placeholder="เลขที่ HN">
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+          <button class="btn btn-primary-custom w-100" onclick="searchChild()">
+            <i class="bi bi-search me-1"></i>ค้นหา
+          </button>
+        </div>
+      </div>
+      <div id="childInfo" class="mt-3" style="display:none"></div>
+    </div>
+  </div>
+
+  <!-- Assessment Form -->
+  <div class="form-card" id="assessmentForm" style="display:none">
+    <div class="form-card-header"><i class="bi bi-clipboard2-check me-2"></i>บันทึกผลการประเมิน DSPM</div>
+    <div class="form-card-body">
+      <input type="hidden" id="assessChildId">
+      <div class="row g-3 mb-4">
+        <div class="col-md-4">
+          <label class="form-label">วันที่ประเมิน *</label>
+          <input type="date" class="form-control" id="assessDate">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">อายุ (เดือน) *</label>
+          <input type="number" class="form-control" id="assessAge" min="0" max="72" placeholder="เช่น 18">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">ผู้ประเมิน</label>
+          <input type="text" class="form-control" id="assessor" placeholder="ชื่อพยาบาล/แพทย์">
+        </div>
+      </div>
+
+      <!-- Domain Assessment -->
+      <div class="domain-grid">
+        <!-- GM -->
+        <div class="domain-card" id="domain-GM">
+          <div class="domain-header domain-gm">
+            <div class="domain-icon"><i class="bi bi-person-arms-up"></i></div>
+            <div>
+              <div class="domain-code">GM</div>
+              <div class="domain-name">Gross Motor</div>
+              <div class="domain-thai">กล้ามเนื้อมัดใหญ่</div>
+            </div>
+          </div>
+          <div class="domain-body">
+            <p class="domain-desc">การเคลื่อนไหวร่างกาย การทรงตัว การเดิน วิ่ง กระโดด</p>
+            <div class="result-buttons" id="gm-buttons">
+              <button class="result-btn btn-pass" onclick="selectResult('GM','Pass')">✓ ผ่าน</button>
+              <button class="result-btn btn-monitor" onclick="selectResult('GM','Monitor')">○ ติดตาม</button>
+              <button class="result-btn btn-delay" onclick="selectResult('GM','Delay')">✗ ล่าช้า</button>
+            </div>
+            <input type="hidden" id="GM_result">
+          </div>
+        </div>
+
+        <!-- FM -->
+        <div class="domain-card" id="domain-FM">
+          <div class="domain-header domain-fm">
+            <div class="domain-icon"><i class="bi bi-hand-index-thumb"></i></div>
+            <div>
+              <div class="domain-code">FM</div>
+              <div class="domain-name">Fine Motor</div>
+              <div class="domain-thai">กล้ามเนื้อมัดเล็ก</div>
+            </div>
+          </div>
+          <div class="domain-body">
+            <p class="domain-desc">การใช้มือ นิ้วมือ การหยิบจับสิ่งของ การวาดรูป</p>
+            <div class="result-buttons" id="fm-buttons">
+              <button class="result-btn btn-pass" onclick="selectResult('FM','Pass')">✓ ผ่าน</button>
+              <button class="result-btn btn-monitor" onclick="selectResult('FM','Monitor')">○ ติดตาม</button>
+              <button class="result-btn btn-delay" onclick="selectResult('FM','Delay')">✗ ล่าช้า</button>
+            </div>
+            <input type="hidden" id="FM_result">
+          </div>
+        </div>
+
+        <!-- RL -->
+        <div class="domain-card" id="domain-RL">
+          <div class="domain-header domain-rl">
+            <div class="domain-icon"><i class="bi bi-ear"></i></div>
+            <div>
+              <div class="domain-code">RL</div>
+              <div class="domain-name">Receptive Language</div>
+              <div class="domain-thai">ภาษาที่รับรู้</div>
+            </div>
+          </div>
+          <div class="domain-body">
+            <p class="domain-desc">ความสามารถในการเข้าใจภาษา การฟัง การทำตามคำสั่ง</p>
+            <div class="result-buttons" id="rl-buttons">
+              <button class="result-btn btn-pass" onclick="selectResult('RL','Pass')">✓ ผ่าน</button>
+              <button class="result-btn btn-monitor" onclick="selectResult('RL','Monitor')">○ ติดตาม</button>
+              <button class="result-btn btn-delay" onclick="selectResult('RL','Delay')">✗ ล่าช้า</button>
+            </div>
+            <input type="hidden" id="RL_result">
+          </div>
+        </div>
+
+        <!-- EL -->
+        <div class="domain-card" id="domain-EL">
+          <div class="domain-header domain-el">
+            <div class="domain-icon"><i class="bi bi-chat-fill"></i></div>
+            <div>
+              <div class="domain-code">EL</div>
+              <div class="domain-name">Expressive Language</div>
+              <div class="domain-thai">ภาษาที่แสดงออก</div>
+            </div>
+          </div>
+          <div class="domain-body">
+            <p class="domain-desc">ความสามารถในการพูด การบอกความต้องการ การสื่อสาร</p>
+            <div class="result-buttons" id="el-buttons">
+              <button class="result-btn btn-pass" onclick="selectResult('EL','Pass')">✓ ผ่าน</button>
+              <button class="result-btn btn-monitor" onclick="selectResult('EL','Monitor')">○ ติดตาม</button>
+              <button class="result-btn btn-delay" onclick="selectResult('EL','Delay')">✗ ล่าช้า</button>
+            </div>
+            <input type="hidden" id="EL_result">
+          </div>
+        </div>
+
+        <!-- PS -->
+        <div class="domain-card" id="domain-PS">
+          <div class="domain-header domain-ps">
+            <div class="domain-icon"><i class="bi bi-people-fill"></i></div>
+            <div>
+              <div class="domain-code">PS</div>
+              <div class="domain-name">Personal Social</div>
+              <div class="domain-thai">สังคม-อารมณ์</div>
+            </div>
+          </div>
+          <div class="domain-body">
+            <p class="domain-desc">การช่วยเหลือตนเอง การเล่นกับผู้อื่น การแสดงออกทางอารมณ์</p>
+            <div class="result-buttons" id="ps-buttons">
+              <button class="result-btn btn-pass" onclick="selectResult('PS','Pass')">✓ ผ่าน</button>
+              <button class="result-btn btn-monitor" onclick="selectResult('PS','Monitor')">○ ติดตาม</button>
+              <button class="result-btn btn-delay" onclick="selectResult('PS','Delay')">✗ ล่าช้า</button>
+            </div>
+            <input type="hidden" id="PS_result">
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-4">
+        <label class="form-label">บันทึกเพิ่มเติม</label>
+        <textarea class="form-control" id="assessNotes" rows="3" placeholder="บันทึกข้อสังเกต..."></textarea>
+      </div>
+
+      <div class="mt-4 d-flex gap-3">
+        <button class="btn btn-primary-custom btn-lg" onclick="submitAssessment()">
+          <i class="bi bi-save me-2"></i>บันทึกผลการประเมิน
+        </button>
+        <button class="btn btn-outline-secondary btn-lg" onclick="clearForm()">
+          <i class="bi bi-x-circle me-1"></i>ล้างข้อมูล
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Result Display -->
+  <div id="resultDisplay" class="mt-4" style="display:none"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/api.js"></script>
+<script src="js/assessment.js"></script>
+</body>
+</html>
