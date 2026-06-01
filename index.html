@@ -1740,17 +1740,41 @@ input::placeholder, textarea::placeholder {
       </div>
       <!-- ตารางโรงพยาบาล -->
       <div class="card">
-        <div class="card-header">
+        <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
           <div class="card-title">🏥 รายการโรงพยาบาลทั้งหมด</div>
-          <button class="btn btn-primary" onclick="loadHospitals()" style="font-size:12px;padding:4px 10px;">⟳ โหลด</button>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-secondary btn-sm" onclick="downloadHospitalTemplate()" style="font-size:11px;padding:4px 10px;">⬇ แบบฟอร์ม</button>
+            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('hospExcelFileInput').click()" style="font-size:11px;padding:4px 10px;">📂 นำเข้า</button>
+            <button class="btn btn-primary" onclick="loadHospitals()" style="font-size:12px;padding:4px 10px;">⟳ โหลด</button>
+          </div>
         </div>
-        <div class="card-body" style="padding:0;overflow-x:auto;">
-          <table class="data-table">
-            <thead><tr><th>รหัส</th><th>ชื่อ</th><th>จังหวัด</th><th>ผู้ติดต่อ</th><th>สถานะ</th><th>จัดการ</th></tr></thead>
-            <tbody id="hospTableBody">
-              <tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-muted);">กด ⟳ โหลด เพื่อดึงข้อมูล</td></tr>
-            </tbody>
-          </table>
+        <div class="card-body" style="padding:16px;">
+          <input type="file" id="hospExcelFileInput" accept=".xlsx,.xls,.csv" style="display:none;" onchange="onHospitalExcelFile(this.files[0])">
+          <div id="hospImportStatus" style="display:none;" class="alert info" onclick="this.style.display='none'">
+            <div class="alert-icon">ℹ</div>
+            <div class="alert-text" id="hospImportStatusText">—</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+            <button class="btn btn-primary" id="hospImportBtn" style="display:none;font-size:12px;padding:6px 12px;" onclick="importHospitalsToGAS()">⬆ นำเข้าทั้งหมด</button>
+            <span id="hospImportRowCount" style="font-size:12px;color:var(--text-muted);"></span>
+          </div>
+          <div style="max-height:220px;overflow:auto;margin-bottom:12px;">
+            <table class="data-table" style="margin-bottom:0;">
+              <thead><tr><th style="width:40px;">#</th><th>รหัส</th><th>ชื่อ</th><th>จังหวัด</th><th>สถานะ</th><th>ตรวจสอบ</th></tr></thead>
+              <tbody id="hospImportPreviewBody">
+                <tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-muted);">เลือกไฟล์ Excel โรงพยาบาลเพื่อดูตัวอย่าง</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div id="hospImportLog" style="display:none;max-height:160px;overflow:auto;border:1px solid var(--border);padding:10px;border-radius:12px;background:var(--bg-panel);"></div>
+          <div style="padding:0;overflow-x:auto;">
+            <table class="data-table">
+              <thead><tr><th>รหัส</th><th>ชื่อ</th><th>จังหวัด</th><th>ผู้ติดต่อ</th><th>สถานะ</th><th>จัดการ</th></tr></thead>
+              <tbody id="hospTableBody">
+                <tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-muted);">กด ⟳ โหลด เพื่อดึงข้อมูล</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
@@ -5253,6 +5277,168 @@ function downloadExcelTemplate() {
 
   XLSX.writeFile(wb, 'DigiPedAI_แบบฟอร์มลงทะเบียนเด็ก.xlsx');
   showToast('✓ ดาวน์โหลดแบบฟอร์มสำเร็จ', 'success');
+}
+
+window._hospitalImportRows = [];
+
+function onHospitalExcelFile(file) {
+  if (!file) return;
+  if (!window.XLSX) { showToast('SheetJS ยังไม่โหลด กรุณารอสักครู่', 'warn'); return; }
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'array', cellDates: true });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const raw = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+      const headerRow = raw[0] || [];
+      const firstCell = String(headerRow[0] || '').toLowerCase();
+      const startRow = /รหัสโรงพยาบาล|hospital_id|hospital id|id/i.test(firstCell) ? 1 : 0;
+      const data = raw.slice(startRow).filter(r => (r && (r[0] || r[1] || r[2])));
+      const rows = data.map(function(r) {
+        return {
+          hospital_id: String(r[0] || '').trim(),
+          hospital_name: String(r[1] || '').trim(),
+          province_code: String(r[2] || '').trim(),
+          address: String(r[3] || '').trim(),
+          contact_person: String(r[4] || '').trim(),
+          phone: String(r[5] || '').trim(),
+          email: String(r[6] || '').trim(),
+          status: String(r[7] || 'เปิดใช้งาน').trim() || 'เปิดใช้งาน'
+        };
+      });
+      window._hospitalImportRows = rows;
+      renderHospitalImportPreview(rows);
+      document.getElementById('hospImportRowCount').textContent = rows.length + ' แถว';
+      document.getElementById('hospImportBtn').style.display = rows.length ? 'inline-flex' : 'none';
+      const st = document.getElementById('hospImportStatus');
+      st.style.display = 'flex';
+      document.getElementById('hospImportStatusText').textContent =
+        `✓ พบ ${rows.length} แถว จากไฟล์ "${file.name}" — ตรวจสอบแล้วกด นำเข้าทั้งหมด`;
+    } catch(err) {
+      showToast('อ่านไฟล์ไม่ได้: ' + err.message, 'error');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function renderHospitalImportPreview(rows) {
+  const tb = document.getElementById('hospImportPreviewBody');
+  if (!tb) return;
+  if (!rows.length) {
+    tb.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-muted);">ไม่มีข้อมูลในไฟล์</td></tr>';
+    return;
+  }
+  tb.innerHTML = rows.slice(0, 20).map(function(r, i) {
+    const ok = r.hospital_id && r.hospital_name;
+    return `<tr>
+      <td style="color:var(--text-muted);">${i+1}</td>
+      <td>${r.hospital_id || '—'}</td>
+      <td>${r.hospital_name || '—'}</td>
+      <td>${r.province_code || '—'}</td>
+      <td>${r.status || 'เปิดใช้งาน'}</td>
+      <td><span class="risk-tag ${ok ? 'normal' : 'high'}">${ok ? '✓ พร้อม' : '⚠ ไม่ครบ'}</span></td>
+    </tr>`;
+  }).join('');
+  if (rows.length > 20) {
+    tb.innerHTML += `<tr><td colspan="6" style="text-align:center;padding:8px;color:var(--text-muted);">... และอีก ${rows.length - 20} แถว</td></tr>`;
+  }
+}
+
+function downloadHospitalTemplate() {
+  if (typeof XLSX === 'undefined') {
+    showToast('กำลังโหลด SheetJS...', 'info');
+    setTimeout(downloadHospitalTemplate, 1000);
+    return;
+  }
+  const headers = [
+    'รหัสโรงพยาบาล*', 'ชื่อโรงพยาบาล*', 'รหัสจังหวัด', 'ที่อยู่',
+    'ผู้ติดต่อ', 'เบอร์โทร', 'อีเมล', 'สถานะ'
+  ];
+  const examples = [
+    ['H001', 'โรงพยาบาลศิริราช', '10', '2 ถ.ศิริราชวังหลัง แขวงศิริราช เขตบางกอกน้อย', 'นพ.สมชาย ใจดี', '021241234', 'siriraj@hospital.go.th', 'เปิดใช้งาน'],
+    ['H002', 'โรงพยาบาลรามาธิบดี', '10', '2 ถ.พระราม 6 แขวงทุ่งพญาไท เขตราชเทวี', 'นพ.จิระพงษ์ สุกใส', '023555123', 'rama@hospital.go.th', 'เปิดใช้งาน'],
+    ['H003', 'โรงพยาบาลจุฬาลงกรณ์', '10', '1873 ถ.พญาไท แขวงวังใหม่ เขตปทุมวัน', 'นพ.ปริญญา บุญชัย', '022506123', 'chula@hospital.go.th', 'เปิดใช้งาน'],
+    ['H004', 'โรงพยาบาลพระมงกุฎเกล้า', '10', '315 ถ.ราชวิถี แขวงทุ่งพญาไท เขตราชเทวี', 'พญ.อรัญญา พูลผล', '023235678', 'pmk@hospital.go.th', 'เปิดใช้งาน'],
+    ['H005', 'โรงพยาบาลเด็กเลิศสิน', '10', '2 ซ.ราชวิถี 2 แขวงทุ่งพญาไท เขตราชเทวี', 'พญ.ปัทมา ทองสุข', '025635432', 'landse@hospital.go.th', 'เปิดใช้งาน'],
+    ['H006', 'โรงพยาบาลศูนย์การแพทย์มหาวิทยาลัยเชียงใหม่', '50', '110 ถ.นิมมานเหมินท์ ต.สุเทพ อ.เมืองเชียงใหม่', 'นพ.วัฒนา แก้วสุข', '053945678', 'cmu@hospital.go.th', 'เปิดใช้งาน'],
+    ['H007', 'โรงพยาบาลนครพิงค์', '50', '159 ถ.โชตนา ต.ท่าศาลา อ.เมืองเชียงใหม่', 'พญ.พิมพ์พิศา ใจงาม', '053920123', 'nakornping@hospital.go.th', 'เปิดใช้งาน'],
+    ['H008', 'โรงพยาบาลมหาราชนครเชียงใหม่', '50', '110 ถ.ห้วยแก้ว ต.สุเทพ อ.เมืองเชียงใหม่', 'นพ.วีระเดช แก้วจันทร์', '053920999', 'mrchiangmai@hospital.go.th', 'เปิดใช้งาน'],
+    ['H009', 'โรงพยาบาลศิริราชปิยมหาราชการุณย์', '10', '2 ถ.ศิริราชวังหลัง แขวงศิริราช เขตบางกอกน้อย', 'นพ.ทศพล นพพร', '021241456', 'siriraj2@hospital.go.th', 'เปิดใช้งาน'],
+    ['H010', 'โรงพยาบาลสงขลานครินทร์', '91', '15 ถ.คอหงส์ ต.คอหงส์ อ.หาดใหญ่', 'นพ.จ้างศักดิ์ ทองเจริญ', '074451234', 'psu@hospital.go.th', 'เปิดใช้งาน'],
+    ['H011', 'โรงพยาบาลมหาสารคาม', '44', '56 ถ.มหาวิทยาลัย ต.แคนใหญ่อำเภอเมือง', 'นพ.ณัฐพล สารคาม', '043711234', 'mhs@hospital.go.th', 'เปิดใช้งาน'],
+    ['H012', 'โรงพยาบาลขอนแก่น', '40', '169 ถ.ประชาสโมสร ต.ในเมือง', 'นพ.วรุตม์ กุลนันท์', '043331234', 'khonkaen@hospital.go.th', 'เปิดใช้งาน'],
+    ['H013', 'โรงพยาบาลนราธิวาสราชนครินทร์', '96', '9 ถ.สุขเกษม ต.ตันหยงลิมอ อ.เมือง', 'นพ.มานัส ศรีสวัสดิ์', '073511234', 'narathiwat@hospital.go.th', 'เปิดใช้งาน'],
+    ['H014', 'โรงพยาบาลชลบุรี', '20', '95 ถ.สุขุมวิท ต.บ้านใหม่ อ.เมืองชลบุรี', 'นพ.ภูวดล ทองนาค', '038511234', 'chb@hospital.go.th', 'เปิดใช้งาน'],
+    ['H015', 'โรงพยาบาลนครราชสีมา', '30', '21 ถ.สุรนารายณ์ ต.ในเมือง อ.เมือง', 'นพ.เกียรติชัย สุขวลัย', '044211234', 'korat@hospital.go.th', 'เปิดใช้งาน'],
+    ['H016', 'โรงพยาบาลมหาวิทยาลัยรามคำแหง', '10', '1692 ถ.รามคำแหง แขวงหัวหมาก เขตบางกะปิ', 'นพ.ศุภกฤต อินทรพงศ์', '021719123', 'ram@hospital.go.th', 'เปิดใช้งาน'],
+    ['H017', 'โรงพยาบาลมหาวิทยาลัยอุบลราชธานี', '34', '85 ถ.นางสาวคำเกิด ต.ในเมือง อ.เมือง', 'พญ.เสาวณี ทองตะเกียง', '045352123', 'ubu@hospital.go.th', 'เปิดใช้งาน'],
+    ['H018', 'โรงพยาบาลศรีนครินทร์', '36', '260 ถ.มหิดล ต.ในเมือง อ.เมืองขอนแก่น', 'นพ.ปกรณ์ ศรีประเสริฐ', '043203123', 'srinc@hospital.go.th', 'เปิดใช้งาน'],
+    ['H019', 'โรงพยาบาลสุราษฎร์ธานี', '84', '134 ถ.ชลาวิภา ต.มะขามเตี้ย อ.เมือง', 'นพ.สงกรานต์ ชัยชนะ', '077211234', 'surat@hospital.go.th', 'เปิดใช้งาน'],
+    ['H020', 'โรงพยาบาลเชียงรายประชานุเคราะห์', '57', '454 ถ.พหลโยธิน ต.ริมกก อ.เมือง', 'นพ.สถาพร ไตรภพ', '053741234', 'chr@hospital.go.th', 'เปิดใช้งาน'],
+    ['H021', 'โรงพยาบาลสุโขทัย', '64', '32 ถ.มิตรภาพ ต.ธานีอำเภอเมือง', 'พญ.ปาริชาติ ไวยโย', '055611234', 'sukhothai@hospital.go.th', 'เปิดใช้งาน'],
+    ['H022', 'โรงพยาบาลตรัง', '92', '101 ถ.กันตัง ต.ทับเที่ยง อ.เมือง', 'นพ.ฐิติวัฒน์ ภูมิล้ำ', '075611234', 'trang@hospital.go.th', 'เปิดใช้งาน'],
+    ['H023', 'โรงพยาบาลระยอง', '21', '32 ถ.สุขุมวิท ต.เนินพระ อ.เมือง', 'นพ.เอกชัย ศรีวัฒนะ', '038611234', 'rayong@hospital.go.th', 'เปิดใช้งาน'],
+    ['H024', 'โรงพยาบาลนครปฐม', '73', '5 ถ.ราชดำเนิน ต.สนามจันทร์ อ.เมือง', 'พญ.มณฑิรา ชลธิรา', '034311234', 'np@hospital.go.th', 'เปิดใช้งาน'],
+    ['H025', 'โรงพยาบาลลำปาง', '52', '145 ถ.พหลโยธิน ต.บ่อแฮ้ว อ.เมือง', 'นพ.ปกรณ์ วัฒนาการ', '054211234', 'lampang@hospital.go.th', 'เปิดใช้งาน'],
+    ['H026', 'โรงพยาบาลนครศรีธรรมราช', '80', '400 ถ.ราชดำเนิน ต.ปากนคร อ.เมือง', 'นพ.สุขสันต์ ประเสริฐ', '075311234', 'nakhonsi@hospital.go.th', 'เปิดใช้งาน'],
+    ['H027', 'โรงพยาบาลยะลา', '95', '285 ถ.ราษฎร์อุทิศ ต.สะเตง อ.เมือง', 'นพ.อรรถชัย สุวรรณศรี', '073211234', 'yala@hospital.go.th', 'เปิดใช้งาน'],
+    ['H028', 'โรงพยาบาลพิษณุโลก', '65', '12 ถ.วังจันทน์ ต.ในเมือง อ.เมือง', 'นพ.สมหมาย ประเสริฐดี', '055211234', 'phitsanulok@hospital.go.th', 'เปิดใช้งาน'],
+    ['H029', 'โรงพยาบาลศรีสะเกษ', '33', '144 ถ.อุทยาน ต.เมืองเหนือ อ.เมือง', 'พญ.วิภาวรรณ แซ่ลิ้ม', '045611234', 'sisaket@hospital.go.th', 'เปิดใช้งาน'],
+    ['H030', 'โรงพยาบาลสระบุรี', '19', '1 ถ.มิตรภาพ ต.ปากเพรียว อ.เมือง', 'นพ.ทยา ปราณีต', '036211234', 'saraburi@hospital.go.th', 'เปิดใช้งาน']
+  ];
+  const wb = XLSX.utils.book_new();
+  const wsData = [headers, ...examples];
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  ws['!cols'] = [{wch:12},{wch:30},{wch:12},{wch:30},{wch:18},{wch:16},{wch:24},{wch:12}];
+  XLSX.utils.book_append_sheet(wb, ws, 'โรงพยาบาล');
+  const instrData = [
+    ['คำอธิบายคอลัมน์'],
+    ['คอลัมน์', 'ชื่อ', 'ตัวอย่าง', 'หมายเหตุ'],
+    ['A', 'รหัสโรงพยาบาล*', 'H001', 'จำเป็นต้องกรอก'],
+    ['B', 'ชื่อโรงพยาบาล*', 'โรงพยาบาลสมเด็จพระยุพราช', 'จำเป็นต้องกรอก'],
+    ['C', 'รหัสจังหวัด', '40', 'ใส่รหัสจังหวัดถ้ามี'],
+    ['D', 'ที่อยู่', '123 ถ.ตัวอย่าง จ.ขอนแก่น', 'ไม่จำเป็น'],
+    ['E', 'ผู้ติดต่อ', 'นายสมชาย', 'ไม่จำเป็น'],
+    ['F', 'เบอร์โทร', '0812345678', 'ไม่จำเป็น'],
+    ['G', 'อีเมล', 'hospital@example.com', 'ไม่จำเป็น'],
+    ['H', 'สถานะ', 'เปิดใช้งาน', 'เปิดใช้งาน หรือ ปิดใช้งาน']
+  ];
+  const wsInstr = XLSX.utils.aoa_to_sheet(instrData);
+  wsInstr['!cols'] = [{wch:6},{wch:24},{wch:28},{wch:36}];
+  XLSX.utils.book_append_sheet(wb, wsInstr, 'คำอธิบาย');
+  XLSX.writeFile(wb, 'DigiPedAI_โรงพยาบาล_แบบฟอร์ม.xlsx');
+  showToast('✓ ดาวน์โหลดแบบฟอร์มโรงพยาบาลสำเร็จ', 'success');
+}
+
+async function importHospitalsToGAS() {
+  const rows = window._hospitalImportRows || [];
+  if (!rows.length) { showToast('ไม่มีข้อมูลที่จะนำเข้า', 'warn'); return; }
+  const btn = document.getElementById('hospImportBtn');
+  btn.disabled = true; btn.textContent = '⏳ กำลังนำเข้า...';
+  const log = document.getElementById('hospImportLog');
+  log.style.display = 'block';
+  log.innerHTML = 'กำลังนำเข้าข้อมูล...';
+  try {
+    const res = await gasPost('bulkSaveHospitals', { hospitals: rows });
+    if (res && res.status === 'success') {
+      const created = res.data.created || 0;
+      const updated = res.data.updated || 0;
+      const skipped = res.data.skipped || 0;
+      log.innerHTML = `<div style="color:var(--risk-normal);">✓ สร้าง ${created} แถว, อัปเดต ${updated} แถว, ข้าม ${skipped} แถว</div>`;
+      if (res.data.errors && res.data.errors.length) {
+        log.innerHTML += res.data.errors.map(e => `<div style="color:var(--risk-high);">⚠ ${e}</div>`).join('');
+      }
+      showToast(`✓ นำเข้า ${created + updated} แถว`, 'success');
+      loadHospitals();
+    } else {
+      showToast('นำเข้าไม่สำเร็จ: ' + (res ? (res.message || JSON.stringify(res)) : 'ไม่ทราบสาเหตุ'), 'error');
+    }
+  } catch (e) {
+    showToast('เชื่อมต่อ GAS ไม่ได้: ' + e.message, 'error');
+    log.innerHTML = `<div style="color:var(--risk-high);">✗ ${e.message}</div>`;
+  }
+  btn.disabled = false;
+  btn.textContent = '⬆ นำเข้าทั้งหมด';
 }
 
 async function importToGAS() {
